@@ -5,4 +5,4 @@ server:
 
 spring:
   application:
-    name: bank
+    name: bank-service
