@@ -6,3 +6,9 @@ server:
 spring:
   application:
     name: bank-service
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
