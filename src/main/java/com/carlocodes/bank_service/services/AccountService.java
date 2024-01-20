@@ -2,7 +2,10 @@ package com.carlocodes.bank_service.services;
 
 import com.carlocodes.bank_service.clients.AccountClient;
 import com.carlocodes.bank_service.dtos.AccountDto;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 
 @Service
 public class AccountService {
@@ -21,6 +24,7 @@ public class AccountService {
         }
     }
 
+    @CircuitBreaker(name = "getAccountCircuitBreaker", fallbackMethod = "getAccountFallback")
     public AccountDto getAccount(Long accountId) throws Exception {
         try {
             return accountClient.getAccount(accountId).getBody();
@@ -28,5 +32,13 @@ public class AccountService {
             throw new Exception(String.format("Get account failed for: %d due to: %s",
                     accountId, e.getMessage()), e);
         }
+    }
+
+    private AccountDto getAccountFallback(Long accountId, Throwable throwable) {
+        AccountDto accountDto = new AccountDto();
+        accountDto.setId(accountId);
+        accountDto.setName("No name found!");
+        accountDto.setBalance(BigDecimal.valueOf(0));
+        return accountDto;
     }
 }

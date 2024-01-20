@@ -3,8 +3,11 @@ package com.carlocodes.bank_service.services;
 import com.carlocodes.bank_service.clients.TransactionClient;
 import com.carlocodes.bank_service.dtos.CreateTransactionDto;
 import com.carlocodes.bank_service.dtos.TransactionDto;
+import com.carlocodes.bank_service.enums.TransactionType;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -24,6 +27,7 @@ public class TransactionService {
         }
     }
 
+    @CircuitBreaker(name = "getTransactionsCircuitBreaker", fallbackMethod = "getTransactionsFallback")
     public List<TransactionDto> getTransactions(Long accountId) throws Exception {
         try {
             return transactionClient.getTransactions(accountId).getBody();
@@ -31,5 +35,14 @@ public class TransactionService {
             throw new Exception(String.format("Get transactions for account id: %d failed due to: %s",
                     accountId, e.getMessage()), e);
         }
+    }
+
+    private List<TransactionDto> getTransactionsFallback(Long accountId, Throwable throwable) {
+        TransactionDto transactionDto = new TransactionDto();
+        transactionDto.setId(1L);
+        transactionDto.setAccountId(accountId);
+        transactionDto.setAmount(BigDecimal.valueOf(0));
+        transactionDto.setTransactionType(TransactionType.UNKNOWN);
+        return List.of(transactionDto);
     }
 }
